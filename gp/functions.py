@@ -2,6 +2,14 @@ from random import randint
 
 import sympy as sym
 
+class protected_division(sym.Function):
+    @classmethod
+    def eval(cls, x, y):
+        if y.is_Number:
+            if y.is_zero:
+                return sym.S.One
+            else:
+                return x/y
 
 def cos(x):
     return sym.cos(x)
@@ -19,11 +27,7 @@ def sub(x, y):
     return x - y
 
 def div(x, y):
-    if y == 0:
-        return 1
-    return x/y
+    return protected_division(x, y)
 
-def rand_f(a, b):
-    def rand():
-        return randint(a, b)
-    return rand
+def rand_f():
+    return randint(2, 60)

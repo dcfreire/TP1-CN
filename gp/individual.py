@@ -3,7 +3,6 @@ from copy import deepcopy
 from random import choice, choices, randint
 from turtle import right
 from typing import Callable, List, Tuple
-
 import sympy as sym
 from typing_extensions import Self
 
@@ -26,13 +25,15 @@ class Individual:
         relevants = list(filter(lambda x: not callable(x[1]) if tnode == "leaf" else callable(x[1]), enumerate(self.get_function_arr())))
         return choice(relevants) if relevants else (0, self.value)
 
+
+
     def mutate(self, mutation_max_depth: int, functions: List[Callable], terminals: List):
         mutation_point = self.choose_random_node()
 
         target, t_depth = self.search(mutation_point[0])
 
         def mutate_callback(ind: Self):
-            size = randint(0, mutation_max_depth - t_depth) if mutation_max_depth - t_depth else 0
+            size = randint(0, mutation_max_depth - t_depth) if mutation_max_depth - t_depth > 0 else 0
             method = choice(["full", "grow"])
             new = Individual.random(size, method, functions, terminals)
 
