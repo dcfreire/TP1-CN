@@ -26,7 +26,6 @@ class Individual:
         return choice(relevants) if relevants else (0, self.value)
 
 
-
     def mutate(self, mutation_max_depth: int, functions: List[Callable], terminals: List):
         mutation_point = self.choose_random_node()
 

@@ -1,0 +1,11 @@
+digraph D {
+    node [shape=circle width=0.5 fixedsize=true]
+    sum [label="+"]
+    cos [shape=circle]
+    x [shape=circle]
+    5 [shape=circle]
+    sum -> cos
+    sum -> 5
+    cos -> x
+
+}

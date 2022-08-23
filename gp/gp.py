@@ -17,7 +17,7 @@ def protected_division(x, y):
     return x/y
 
 class GP:
-    def __init__(self, data: np.ndarray, popsize: int, mutation_rate: float, min_depth: int, max_depth: int, tournament_size: int, generations: int, phi: int) -> None:
+    def __init__(self, data: np.ndarray, popsize: int, mutation_rate: float, min_depth: int, max_depth: int, tournament_size: int, generations: int, phi: float, n_elites: int) -> None:
         self.phi = phi
         self.functions: List[Callable] = [add, div, sub, mul, sin, cos]
         self.terminals: List = [sym.Symbol(f"x_{i}") for i in range(len(data[0])-1)] + [rand_f()]
@@ -32,6 +32,7 @@ class GP:
         self.torunament_size = tournament_size
         self.divisor = np.sum((self.data[:, -1] - np.mean(self.data[:, -1]))**2)
         self.it = 0
+        self.n_elites = n_elites
         print(self.divisor)
 
     def _gen_pop(self):
@@ -60,18 +61,33 @@ class GP:
     def get_result_from_future(future):
         return future.result()
 
+    def get_elites(self):
+        sorted_pop = sorted(self.pop, key=self.get_fitness)
+        ret = []
+        r_fits = []
+        for ind in sorted_pop:
+            if ind[0] not in r_fits:
+                ret.append(ind)
+                r_fits.append(ind[0])
+            if len(ret) == self.n_elites:
+                break
+
+        return ret
+
     def selection(self):
         with ProcessPoolExecutor(max_workers=os.cpu_count()*3) as executor:
             tasks = []
-            while len(tasks)/self.popsize < 1 - self.mutation_rate:
+            psize = self.popsize - self.n_elites
+            while len(tasks)/psize < 1 - self.mutation_rate:
                 tasks.append(executor.submit(self.crossover_worker))
 
-            while len(tasks) < self.popsize - 1:
+            while len(tasks) < psize:
                 tasks.append(executor.submit(self.mutation_worker))
 
             offspring, _ = wait(tasks, return_when=ALL_COMPLETED)
             offspring = list(map(self.get_result_from_future, offspring))
-            offspring.append(min(self.pop, key=self.get_fitness))
+            offspring.extend(self.get_elites())
+
 
 
         self.pop = offspring

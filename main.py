@@ -1,124 +1,112 @@
-import os
-from concurrent.futures import ALL_COMPLETED, ProcessPoolExecutor, wait
-from time import sleep
-
 import numpy as np
+from fast_gp import GP
+from concurrent.futures import ALL_COMPLETED, ProcessPoolExecutor, wait
+import json
+import time
 import sympy as sym
 
-from gp import GP, Individual
-from gp.functions import *
+from fast_gp.individual import Individual
+
+with open("datasets/datasets/synth1/synth1-train.csv", "r") as f:
+    data2 = np.loadtxt(f, delimiter=",")
+with open("datasets/datasets/synth1/synth1-test.csv", "r") as f:
+    test2 = np.loadtxt(f, delimiter=",")
+
+with open("datasets/datasets/synth2/synth2-train.csv", "r") as f:
+    data1 = np.loadtxt(f, delimiter=",")
+with open("datasets/datasets/synth2/synth2-test.csv", "r") as f:
+    test1 = np.loadtxt(f, delimiter=",")
+
+with open("datasets/datasets/concrete/concrete-train.csv", "r") as f:
+    data3 = np.loadtxt(f, delimiter=",")
+with open("datasets/datasets/concrete/concrete-test.csv", "r") as f:
+    test3 = np.loadtxt(f, delimiter=",")
 
 
-def test_func(data, popsize, mutation_rate, tournament_size, phi, generations):
-    g = GP(data, popsize, mutation_rate, 2, 7, tournament_size, generations, phi)
-    var = g.start()[1]
-    #print(g.fitness(var))
-    print(var.get_func())
-    #print(var.get_function_arr())
+def test_func(_, data, popsize, mutation_rate, tournament_size, phi, generations, test, elitist_operators):
+    # print(f"Testing {name}")
+
+    g = GP(data, popsize, mutation_rate, 2, 7, tournament_size, generations, phi, 5, elitist_operators)
+    var = g.start(test)
+
     return var
 
-if __name__ == "__main__":
-    with open('datasets/datasets/synth1/synth1-train.csv', 'r') as f:
-        data = np.loadtxt(f, delimiter=",")
-    with open('datasets/datasets/synth1/synth1-test.csv', 'r') as f:
-        test = np.loadtxt(f, delimiter=",")
+"""testing_params = [ {
+        "name": "tests/phi/1.5",
+        "data": data2,
+        "popsize": 500,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "phi": 1.5,
+        "generations": 100,
+        "test": test2,
+        "elitist_operators": True,
+},
+{
+        "name": "tests/phi/1.2",
+        "data": data2,
+        "popsize": 500,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "phi": 1.2,
+        "generations": 100,
+        "test": test2,
+        "elitist_operators": True,
+},
+]"""
 
-    g = GP(data, 200, 1, 2, 7, 3, 100, 5)
-    testing_params = [
-        {
-            "data": data,
-            "popsize": 100,
-            "mutation_rate": 0.2,
-            "tournament_size": 3,
-            "phi": 5,
-            "generations": 100
-        },
-        {
-            "data": data,
-            "popsize": 100,
-            "mutation_rate": 0.2,
-            "tournament_size": 3,
-            "phi": 4,
-            "generations": 100
-        },
-        {
-            "data": data,
-            "popsize": 200,
-            "mutation_rate": 0.2,
-            "tournament_size": 3,
-            "phi": 5,
-            "generations": 100
-        },
-        {
-            "data": data,
-            "popsize": 100,
-            "mutation_rate": 0.2,
-            "tournament_size": 3,
-            "phi": 5,
-            "generations": 200
-        },
-        {
-            "data": data,
-            "popsize": 200,
-            "mutation_rate": 0.2,
-            "tournament_size": 3,
-            "phi": 5,
-            "generations": 500
-        },
-    ]
-    for params in testing_params:
-        with ProcessPoolExecutor(max_workers=10) as executor:
-            tasks = []
-            for i in range(30):
-                tasks.append(executor.submit(test_func, *params.values()))
+testing_params = [
+    {
+        "name": "tests/final/synth1",
+        "data": data2,
+        "popsize": 500,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "phi": 1.5,
+        "generations": 100,
+        "test": test2,
+        "elitist_operators": True,
+    },
+    {
+        "name": "tests/final/synth2",
+        "data": data1,
+        "popsize": 500,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "phi": 1.5,
+        "generations": 100,
+        "test": test1,
+        "elitist_operators": True,
+    },
+    {
+        "name": "tests/final/concrete",
+        "data": data3,
+        "popsize": 500,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "phi": 1.5,
+        "generations": 100,
+        "test": test3,
+        "elitist_operators": True,
+    },
+]
 
-            done, _ = wait(tasks, return_when=ALL_COMPLETED)
-            sleep(5)
-            r = []
-            for task in done:
-                print("================================================")
-                res = task.result()
-                r.append(g.fitness(res, data=test))
-                print(res)
-                print(g.fitness(res))
-                print(g.fitness(res, data=test))
-            print("MEAN:", np.mean(r))
-    os.system('shutdown now')
-"""
-import numpy as np
-import sympy as sym
-from gp import Individual, GP
-from gp.functions import *
+g = GP(data2, 1, 1, 2, 7, 1, 1, 1, 10)
+for params in testing_params:
+    r = []
 
-if __name__ == "__main__":
-    with open('datasets/datasets/synth1/synth1-train.csv', 'r') as f:
-        data = np.loadtxt(f, delimiter=",")
-    g = GP(data, 100, 0.1, 2, 7, 3)
-    #var = g.start()
-    #print(g.fitness(var))
-    #print(var.get_func())
-    #print(var.get_function_arr())
-    #x = sym.Symbol('x')
-    i0 = Individual(mul)
-    i1 = Individual(sub)
-    i2 = Individual(sin)
-    i0.left = i1
-    i0.right = i2
-    i3 = Individual(sym.Symbol('x_1'))
-    i4 = Individual(add)
-    i1.left = i3
-    i1.right = i4
-    i5 = Individual(sym.Symbol('x_1'))
-    i2.left = i5
-    i6 = Individual(sym.Symbol('x_0'))
-    i7 = Individual(sym.Symbol('x_0'))
-    i4.left = i6
-    i4.right = i7
+    with ProcessPoolExecutor(max_workers=30) as executor:
+        tasks = []
+        for i in range(30):
+            tasks.append(executor.submit(test_func, *params.values()))
 
-    print(i0.get_depth())
-    print(i0.get_function_arr())
+        done, _ = wait(tasks, return_when=ALL_COMPLETED)
 
-    print("================================================")
-    #print(g.fitness(var))
-
-"""
+        for task in done:
+            print(int(time.time()))
+            res = task.result()
+            res[1]["func"] = str(res[0][1].get_func())
+            r.append(res[1])
+        executor.shutdown()
+    with open("%s.json" % (params["name"]), "w") as f:
+        json.dump(r, f)
